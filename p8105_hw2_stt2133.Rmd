@@ -1,0 +1,6 @@
+---
+title: "Homework 2 (p8105)"
+author: "Sanyu Takirambudde (stt2133)"
+date: 2026-10-??
+output: github_document
+---
