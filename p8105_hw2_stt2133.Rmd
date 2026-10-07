@@ -1,7 +1,7 @@
 ---
 title: "Homework 2 (p8105)"
 author: "Sanyu Takirambudde (stt2133)"
-date: 2026-10-??
+date: 2026-10-07
 output: github_document
 ---
 
@@ -11,7 +11,7 @@ library(tidyverse)
 
 # Problem 1
 
-```{r}
+```{r, warning = FALSE}
 subway_df = 
   read_csv("data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv", 
            na = c("", "NA", ".")) |>
@@ -20,6 +20,55 @@ subway_df =
          route2, route3, route4, route5, route6, route7, route8, route9,
          route10, route11, entry, vending, entrance_type, ada) |>
   mutate(entry = case_match(entry, "YES" ~ TRUE, "NO" ~ FALSE))
+subway_df
 ```
+
+The subway_df dataset originally included the 32 following variables: Division, Line, Station Name, Station Latitude, Station Longitude, Route1, Route2, Route3, Route4, Route5, Route6, Route7, Route8, Route9, Route10, Route11, Entrance Type, Entry, Exit Only, Vending, Staffing, Staff Hours, ADA, ADA Notes, Free Crossover, North South Street, East West Street, Corner, Entrance Latitude, Entrance Longitude, Station Location, Entrance Location. All variable name (the coloumn names in the dataframe) were converted to lower snake case. Thereafter, only the following 19 variables were retained: line, station, name, station latitude, station longitude, routes1 - routes11 , entry, vending, entrance type, and ADA compliance. The entry variable was originally imported as a character variable (YES vs. NO) and subsequently mutated to a logical variable (TRUE vs. FALSE). The dimension of the resulting dataset was 1868 rows x 19 columns. At this point, the dataset is not tidy. For example, each observation is not unique and has duplicates of every corresponding value. 
+
+```{r}
+distinct_stations = subway_df |> 
+                        distinct(station_name, line, .keep_all = TRUE)
+```
+
+There are `r nrow(distinct_stations)` in the subway dataset.
+
+```{r}
+distinct_ada_stations = distinct_stations |>
+                          filter(ada == TRUE)
+```
+
+`r nrow(distinct_ada_stations)` stations are ADA compliant.
+
+```{r}
+no_vending = subway_df |> 
+              filter(vending == "NO")
+```
+
+`r round(mean(pull(no_vending, entry))*100 , 2)`% of station entrances and exits without vending allow entrance.
+
+```{r}
+subway_tidy = subway_df |> 
+                mutate(
+                  route8  = as.character(route8), 
+                  route9  = as.character(route9), 
+                  route10 = as.character(route10), 
+                  route11 = as.character(route11) 
+                ) |>
+                pivot_longer(
+                  route1:route11,
+                  names_to = "route_number",
+                  values_to = "route_name")
+
+distinct_a_stations = subway_tidy |>
+                        filter(route_name == "A") |> 
+                        distinct(station_name, line, .keep_all = TRUE)
+```
+`r nrow(distinct_a_stations)` distinct stations serve the A train.
+
+```{r}
+distinct_ada_a_stations = distinct_a_stations |> 
+                           filter(ada == TRUE)
+```
+Of the stations that serve the A train, `r nrow(distinct_ada_a_stations)`  stations are ADA compliant.
 
 
