@@ -7,6 +7,7 @@ output: github_document
 
 ```{r setup, include = FALSE}
 library(tidyverse)
+library(readxl)
 ```
 
 # Problem 1
@@ -72,3 +73,19 @@ distinct_ada_a_stations = distinct_a_stations |>
 Of the stations that serve the A train, `r nrow(distinct_ada_a_stations)`  stations are ADA compliant.
 
 
+
+
+# Problem 2
+
+### Read and clean the Mr. Trash Wheel sheet
+
+```{r mtw}
+mtw_df = 
+  read_excel("data/202610 Trash Wheel Collection Data.xlsx",
+             sheet = 1,
+             range = "A2:N742") |>
+  janitor::clean_names() |>
+  mutate(
+    sports_balls = round(sports_balls),
+    sports_balls = as.integer(sports_balls))
+```
