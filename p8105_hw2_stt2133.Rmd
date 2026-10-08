@@ -24,7 +24,7 @@ subway_df =
 subway_df
 ```
 
-The subway_df dataset originally included the 32 following variables: Division, Line, Station Name, Station Latitude, Station Longitude, Route1, Route2, Route3, Route4, Route5, Route6, Route7, Route8, Route9, Route10, Route11, Entrance Type, Entry, Exit Only, Vending, Staffing, Staff Hours, ADA, ADA Notes, Free Crossover, North South Street, East West Street, Corner, Entrance Latitude, Entrance Longitude, Station Location, Entrance Location. All variable name (the coloumn names in the dataframe) were converted to lower snake case. Thereafter, only the following 19 variables were retained: line, station, name, station latitude, station longitude, routes1 - routes11 , entry, vending, entrance type, and ADA compliance. The entry variable was originally imported as a character variable (YES vs. NO) and subsequently mutated to a logical variable (TRUE vs. FALSE). The dimension of the resulting dataset was 1868 rows x 19 columns. At this point, the dataset is not tidy. For example, each observation is not unique and has duplicates of every corresponding value. 
+The subway_df dataset originally included the 32 following variables: Division, Line, Station Name, Station Latitude, Station Longitude, Route1, Route2, Route3, Route4, Route5, Route6, Route7, Route8, Route9, Route10, Route11, Entrance Type, Entry, Exit Only, Vending, Staffing, Staff Hours, ADA, ADA Notes, Free Crossover, North South Street, East West Street, Corner, Entrance Latitude, Entrance Longitude, Station Location, Entrance Location. All variable name (the coloumn names in the dataframe) were converted to lower snake case. Thereafter, only the following `r ncol(subway_df)` variables were retained: line, station, name, station latitude, station longitude, routes1 - routes11 , entry, vending, entrance type, and ADA compliance. The entry variable was originally imported as a character variable (YES vs. NO) and subsequently mutated to a logical variable (TRUE vs. FALSE). The dimension of the resulting dataset was `r nrow(subway_df)` rows x `r ncol(subway_df)` columns. At this point, the dataset is not tidy. For example, each observation is not unique and has duplicates of every corresponding value. 
 
 ```{r}
 distinct_stations = subway_df |> 
@@ -45,7 +45,7 @@ no_vending = subway_df |>
               filter(vending == "NO")
 ```
 
-`r round(mean(pull(no_vending, entry))*100 , 2)`% of station entrances and exits without vending allow entrance.
+`r round(mean(pull(no_vending, entry))*100, 2)`% of station entrances and exits without vending allow entrance.
 
 ```{r}
 subway_tidy = subway_df |> 
@@ -107,7 +107,7 @@ gwy_df =
   janitor::clean_names()
 ```
 
-```{r}
+```{r, warning = FALSE}
 mtw_df = mtw_df |> 
           mutate(
             trash_wheel = "mr",
@@ -130,7 +130,7 @@ There are `r nrow(trash_wheel_df)` observation in the resulting dataset. Key var
 
 ## Import, Clean, and Tidy Baseline Demographics Dataset
 ```{r}
-mci_demos_df = 
+mci_baseline_df = 
   read_csv("data/MCI_baseline.csv",
            skip = 1,
            na = ".") |>
@@ -141,6 +141,10 @@ mci_demos_df =
                       0 ~ "female"),
     apoe4 = case_match(apoe4, 
                       1 ~ "carrier", 
-                      0 ~ "non-carrier")) |>
-  drop_na(age_at_onset)
+                      0 ~ "non-carrier"),
+    onset_time = age_at_onset - current_age) |>
+  filter(onset_time > 0 | is.na(age_at_onset))
 ```
+
+The MCI_baseline.csv dataset was imported as mci_baseline_df. The first row was skipped as it contained variable descriptions and coding schemes for each corresponding column. Any value in the dataset that consisted solely as a character string of a single period ("."), was interpreted as a missing value during the import step. Thereafter, column names were converted to lower snake case. The  values of the two binary variables (sex and apoe4) were converted from numeric 1 vs. 0 values to more appropriate and descriptive character strings (male/female and carrier/non-carrier). A new column was added to denote the time (in years) between age_at_onset and current_age. Using this new onset_time variable, rows in which onset_time were negative, indicating that the participant had already developed MCI at baseline, were dropped from the resulting dataset. In total, `r nrow(mci_baseline_df)` participants were recruited and, of these, `r (nrow(mci_baseline_df))-(nrow(drop_na(mci_baseline_df, age_at_onset)))` particpants went on to develop MCI. The average age at baseline was `r round(mean(pull(mci_baseline_df, current_age)))` years. `r ((nrow(filter(mci_baseline_df, sex=="female" & apoe4 == "carrier")))/(nrow(filter(mci_baseline_df, sex == "female")))*100)`% of the women in the study were APOE4 carriers.
+
