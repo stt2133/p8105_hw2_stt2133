@@ -21,10 +21,9 @@ subway_df =
          route2, route3, route4, route5, route6, route7, route8, route9,
          route10, route11, entry, vending, entrance_type, ada) |>
   mutate(entry = case_match(entry, "YES" ~ TRUE, "NO" ~ FALSE))
-subway_df
 ```
 
-The subway_df dataset originally included the 32 following variables: Division, Line, Station Name, Station Latitude, Station Longitude, Route1, Route2, Route3, Route4, Route5, Route6, Route7, Route8, Route9, Route10, Route11, Entrance Type, Entry, Exit Only, Vending, Staffing, Staff Hours, ADA, ADA Notes, Free Crossover, North South Street, East West Street, Corner, Entrance Latitude, Entrance Longitude, Station Location, Entrance Location. All variable name (the coloumn names in the dataframe) were converted to lower snake case. Thereafter, only the following `r ncol(subway_df)` variables were retained: line, station, name, station latitude, station longitude, routes1 - routes11 , entry, vending, entrance type, and ADA compliance. The entry variable was originally imported as a character variable (YES vs. NO) and subsequently mutated to a logical variable (TRUE vs. FALSE). The dimension of the resulting dataset was `r nrow(subway_df)` rows x `r ncol(subway_df)` columns. At this point, the dataset is not tidy. For example, each observation is not unique and has duplicates of every corresponding value. 
+The NYC subway dataset contains `r ncol(subway_df)` variables, which include `r colnames(subway_df)`. All variable name (the coloumn names in the dataframe) were converted to lower snake case.  The entry variable was originally imported as a character variable (YES vs. NO) and subsequently mutated to a logical variable (TRUE vs. FALSE). The dimension of the resulting dataset was `r nrow(subway_df)` rows x `r ncol(subway_df)` columns. At this point, the dataset is not tidy. For example, each observation is not unique and has duplicates of every corresponding value. 
 
 ```{r}
 distinct_stations = subway_df |> 
@@ -71,8 +70,6 @@ distinct_ada_a_stations = distinct_a_stations |>
                            filter(ada == TRUE)
 ```
 Of the stations that serve the A train, `r nrow(distinct_ada_a_stations)`  stations are ADA compliant.
-
-
 
 
 # Problem 2
@@ -130,7 +127,7 @@ There are `r nrow(trash_wheel_df)` observation in the resulting dataset. Key var
 
 ## Import, Clean, and Tidy Baseline Demographics Dataset
 ```{r}
-mci_baseline_df = 
+baseline_df = 
   read_csv("data/MCI_baseline.csv",
            skip = 1,
            na = ".") |>
@@ -141,12 +138,11 @@ mci_baseline_df =
                       0 ~ "female"),
     apoe4 = case_match(apoe4, 
                       1 ~ "carrier", 
-                      0 ~ "non-carrier"),
-    onset_time = age_at_onset - current_age) |>
-  filter(onset_time > 0 | is.na(age_at_onset))
+                      0 ~ "non-carrier")) |>
+  filter((age_at_onset - current_age) > 0 | is.na(age_at_onset))
 ```
 
-The MCI_baseline.csv dataset was imported as mci_baseline_df. The first row was skipped as it contained variable descriptions and coding schemes for each corresponding column. Any value in the dataset that consisted solely as a character string of a single period ("."), was interpreted as a missing value during the import step. Thereafter, column names were converted to lower snake case. The  values of the two binary variables (sex and apoe4) were converted from numeric 1 vs. 0 values to more appropriate and descriptive character strings (male/female and carrier/non-carrier). A new column was added to denote the time (in years) between age_at_onset and current_age. Using this new onset_time variable, rows in which onset_time were negative, indicating that the participant had already developed MCI at baseline, were dropped from the resulting dataset. In total, `r nrow(mci_baseline_df)` participants were recruited and, of these, `r (nrow(mci_baseline_df))-(nrow(drop_na(mci_baseline_df, age_at_onset)))` particpants went on to develop MCI. The average age at baseline was `r round(mean(pull(mci_baseline_df, current_age)))` years. `r ((nrow(filter(mci_baseline_df, sex=="female" & apoe4 == "carrier")))/(nrow(filter(mci_baseline_df, sex == "female")))*100)`% of the women in the study were APOE4 carriers.
+The MCI_baseline.csv dataset was imported as baseline_df. The first row was skipped as it contained variable descriptions and coding schemes for each corresponding column. Any value in the dataset that consisted solely as a character string of a single period ("."), was interpreted as a missing value during the import step. Thereafter, column names were converted to lower snake case. The  values of the two binary variables (sex and apoe4) were converted from numeric 1 vs. 0 values to more appropriate and descriptive character strings (male/female and carrier/non-carrier). A new column was added to denote the time (in years) between age_at_onset and current_age. Using this new onset_time variable, rows in which onset_time were negative, indicating that the participant had already developed MCI at baseline, were dropped from the resulting dataset. In total, `r nrow(baseline_df)` participants were recruited and, of these, `r (nrow(baseline_df))-(nrow(drop_na(baseline_df, age_at_onset)))` participants went on to develop MCI. The average age at baseline was `r round(mean(pull(baseline_df, current_age)))` years. `r ((nrow(filter(baseline_df, sex=="female" & apoe4 == "carrier")))/(nrow(filter(baseline_df, sex == "female")))*100)`% of the women in the study were APOE4 carriers.
 
 
 ```{r}
@@ -155,8 +151,29 @@ amyloid_df =
            skip = 1,
            na = c("NA", "Na")) |>
   janitor::clean_names() |>
-  mutate(baseline_to_measurement_time = baseline)
+  rename(time_0 = baseline) |>
+  pivot_longer(
+    time_0:time_8,
+    names_to = "time",
+    names_prefix = "time_",
+    values_to = "amyloid_ratio")
 ```
 
-The mci_amyloid.csv dataset was imported as amyloid_df. The first row was again skipped as it contained a variable description for the column denoting time elapsed from baseline to measurement. Any value in the dataset that consisted solely as a character string of "NA" or "Na" was interpreted as a missing value during the import step. Thereafter, column names were converted to lower snake case. The name of the column denoting time elapsed from baseline to measurement was more clearly described. There are `r nrow(amyloid_df)` observations in the resulting dataset. There are `r ncol(amyloid_df)` variables including study ID, baseline to measurement time, and amyloid 42/40 ratio at time 2, 4, 6 and 8. 
+The mci_amyloid.csv dataset was imported as amyloid_df. The first row was again skipped as it contained a variable description for the column denoting time elapsed from baseline to measurement. Any value in the dataset that consisted solely as a character string of "NA" or "Na" was interpreted as a missing value during the import step. Thereafter, column names were converted to lower snake case. The name of the baseline column was renamed time_0 to align with the column names of other amyloid ratio measurements. There are `r nrow(amyloid_df)` observations in the resulting dataset. There are `r ncol(amyloid_df)` variables including `r colnames(amyloid_df)`. 
 
+```{r}
+amyloid_df =
+  rename(amyloid_df,
+         id = study_id)
+
+mci_df = inner_join(
+          baseline_df, amyloid_df, by = "id") 
+```
+
+There were `r nrow(distinct(baseline_df, id)) - nrow(distinct(mci_df, id))` participants that were only in the baseline dataset and `r nrow(distinct(amyloid_df, id)) - nrow(distinct(mci_df, id))` participants that were only in amyloid dataset.
+
+After combining the demographic and biomarker datasets to retain only participants who appear in both, the resulting mci_df consisted of `r nrow(mci_df)` observations of `r nrow(distinct(mci_df, id))` participants and `r ncol(mci_df)` different variables including all unique variables from the amyloid_df and mci_baseline_df datasets, namely: `r colnames(mci_df)`.
+
+```{r}
+write_csv(mci_df, "data/mci.csv")
+```
