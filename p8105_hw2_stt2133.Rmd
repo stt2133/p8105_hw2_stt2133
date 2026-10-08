@@ -154,5 +154,9 @@ amyloid_df =
   read_csv("data/mci_amyloid.csv",
            skip = 1,
            na = c("NA", "Na")) |>
-  janitor::clean_names()
+  janitor::clean_names() |>
+  mutate(baseline_to_measurement_time = baseline)
 ```
+
+The mci_amyloid.csv dataset was imported as amyloid_df. The first row was again skipped as it contained a variable description for the column denoting time elapsed from baseline to measurement. Any value in the dataset that consisted solely as a character string of "NA" or "Na" was interpreted as a missing value during the import step. Thereafter, column names were converted to lower snake case. The name of the column denoting time elapsed from baseline to measurement was more clearly described. There are `r nrow(amyloid_df)` observations in the resulting dataset. There are `r ncol(amyloid_df)` variables including study ID, baseline to measurement time, and amyloid 42/40 ratio at time 2, 4, 6 and 8. 
+
